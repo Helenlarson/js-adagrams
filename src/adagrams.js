@@ -38,9 +38,27 @@ export const drawLetters = () => {
     }
   } return hand;
 }
+
 export const usesAvailableLetters = (input, lettersInHand) => {
-  // Implement this method for wave 2
+  if (!input) return false;  // protege contra input vazio
+
+  const word = input.toUpperCase();        // testes usam letras maiúsculas
+  const handCopy = [...lettersInHand];     // cópia para não modificar original
+
+  for (const char of word) {
+    const index = handCopy.indexOf(char);  // procura a letra na mão
+
+    if (index === -1) {
+      // letra não existe ou já foi usada mais vezes do que no hand
+      return false;
+    }
+
+    handCopy.splice(index, 1);  // remove a letra usada para não repetir além do permitido
+  }
+
+  return true;  // se conseguir validar todas as letras, a palavra é válida
 };
+
 
 export const scoreWord = (word) => {
   // Implement this method for wave 3
