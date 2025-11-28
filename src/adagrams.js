@@ -1,69 +1,145 @@
-const LETTERS = {
-  A: {freq: 9, value: 1}, B: {freq: 2, value: 3}, C: {freq: 2, value: 3},
-  D: {freq: 4, value: 2}, E: {freq: 12, value: 1}, F: {freq: 2, value: 4},
-  G: {freq: 3, value: 2}, H: {freq: 2, value: 4}, I: {freq: 9, value: 1},
-  J: {freq: 1, value: 8}, K: {freq: 1, value: 5}, L: {freq: 4, value: 1},
-  M: {freq: 2, value: 3}, N: {freq: 6, value: 1}, O: {freq: 8, value: 1},
-  P: {freq: 2, value: 3}, Q: {freq: 1, value: 10}, R: {freq: 6, value: 1},
-  S: {freq: 4, value: 1}, T: {freq: 6, value: 1}, U: {freq: 4, value: 1},
-  V: {freq: 2, value: 4}, W: {freq: 2, value: 4}, X: {freq: 1, value: 8},
-  Y: {freq: 2, value: 4}, Z: {freq: 1, value: 10}
-};
-
 const buildLetterPool = () => {
+  const LETTER_FREQUENCIES = {
+    A: 9, B: 2, C: 2, D: 4,
+    E: 12, F: 2, G: 3, H: 2,
+    I: 9, J: 1, K: 1, L: 4,
+    M: 2, N: 6, O: 8, P: 2,
+    Q: 1, R: 6, S: 4, T: 6,
+    U: 4, V: 2, W: 2, X: 1,
+    Y: 2, Z: 1
+  };
+
   const letterPool = [];
-  for (const letter of Object.keys(LETTERS)) {
-    for (let i = 0; i < LETTERS[letter].freq; i ++) {
+  for (const letter of Object.keys(LETTER_FREQUENCIES)) {
+    for (let i = 0; i < LETTER_FREQUENCIES[letter]; i ++) {
       letterPool.push(letter);
     }
+
   } return letterPool;
 };
 
 const freqCheck = (tile, hand) => {
-  const countOfLetterInHand = hand.filter((letter) => letter === tile);
-  if (countOfLetterInHand.length < LETTERS[tile].freq) {
+  const LETTER_FREQUENCIES = {
+    A: 9, B: 2, C: 2, D: 4,
+    E: 12, F: 2, G: 3, H: 2,
+    I: 9, J: 1, K: 1, L: 4,
+    M: 2, N: 6, O: 8, P: 2,
+    Q: 1, R: 6, S: 4, T: 6,
+    U: 4, V: 2, W: 2, X: 1,
+    Y: 2, Z: 1
+  };
+
+  const tilesInHand = hand.filter((letter) => letter === tile);
+  if (tilesInHand.length < LETTER_FREQUENCIES[tile]) {
     return true;
+
   } return false;
 };
 
 export const drawLetters = () => {
   const letterPool = buildLetterPool();
   const maxRandomIndex = (letterPool.length);
+
   const hand = [];
   while (hand.length < 10) {
     let randomIndex = Math.floor(Math.random() * maxRandomIndex);
     let tile = letterPool[randomIndex];
+
     if (freqCheck(tile, hand)) {
       hand.push(tile);
     }
+
   } return hand;
-}
-
-export const usesAvailableLetters = (input, lettersInHand) => {
-  if (!input) return false;  // protege contra input vazio
-
-  const word = input.toUpperCase();        // testes usam letras maiúsculas
-  const handCopy = [...lettersInHand];     // cópia para não modificar original
-
-  for (const char of word) {
-    const index = handCopy.indexOf(char);  // procura a letra na mão
-
-    if (index === -1) {
-      // letra não existe ou já foi usada mais vezes do que no hand
-      return false;
-    }
-
-    handCopy.splice(index, 1);  // remove a letra usada para não repetir além do permitido
-  }
-
-  return true;  // se conseguir validar todas as letras, a palavra é válida
 };
 
+const createFreqMap = (item) => {
+  const freqMap = {};
+
+  for (let i of item) {
+    if (i in freqMap) {
+      freqMap[i] += 1;
+    } else {
+      freqMap[i] = 1;
+    }
+
+  } return freqMap;
+};
+
+export const usesAvailableLetters = (input, lettersInHand) => {
+  const wordFreqMap = createFreqMap(input);
+  const handFreqMap = createFreqMap(lettersInHand);
+
+  for (const letter of Object.keys(wordFreqMap)) {
+    if (isNaN(handFreqMap[letter]) || wordFreqMap[letter] > handFreqMap[letter]) {
+      return false;
+    }
+  } return true;
+};
 
 export const scoreWord = (word) => {
-  // Implement this method for wave 3
+  const LETTER_SCORES = {
+    A: 1, E: 1, I: 1, O: 1, U: 1,
+    L: 1, N: 1, R: 1, S: 1, T: 1,
+    D: 2, G: 2,
+    B: 3, C: 3, M: 3, P: 3,
+    F: 4, H: 4, V: 4, W: 4, Y: 4,
+    K: 5, J: 8, X: 8, Q: 10, Z: 10
+  };
+
+  let score = 0;
+  const wordUpper = word.toUpperCase();
+
+  for (let letter of wordUpper) {
+    score += LETTER_SCORES[letter];
+  }
+
+  if (word.length >= 7) {
+    score += 8;
+
+  } return score;
+};
+
+const createWordScoreObjects = (words) => {
+  let wordScoreObjects = [];
+
+  for (let word of words) {
+    wordScoreObjects.push({'score': scoreWord(word), 'word': word});
+
+  } return wordScoreObjects;
+};
+
+const getMaxScore = (wordScoreObjects) => {
+  let highScore = wordScoreObjects.reduce((bestScore, current) => {
+    if (current.score > bestScore.score) {
+      return current;
+    } else {
+      return bestScore;
+    }
+  }); return highScore.score;
+};
+
+const getTiedWords = (words) => {
+  let wordScoreObjects = createWordScoreObjects(words);
+  let highScore = getMaxScore(wordScoreObjects);
+  let tiedWords = wordScoreObjects.filter(wordScore => wordScore.score === highScore);
+  return tiedWords;
 };
 
 export const highestScoreFrom = (words) => {
-  // Implement this method for wave 4
+  const tiedWords = getTiedWords(words);
+
+  if (tiedWords.length === 1) {
+    return tiedWords[0];
+  }
+
+  let shortestWord = tiedWords[0];
+  for (let i = 0; i < tiedWords.length; i ++) {
+    if (tiedWords[i].word.length === 10) {
+      return tiedWords[i];
+    }
+    if (tiedWords[i].word.length < shortestWord.word.length) {
+      shortestWord = tiedWords[i];
+    }
+
+  } return shortestWord;
 };
